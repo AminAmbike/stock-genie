@@ -54,8 +54,16 @@ async def scrape_article_text(session, url):
 
 async def async_query(session, payload):
     async with session.post(API_URL, headers=headers, json=payload) as response:
-        return await response.json()
-
+        try:
+            return await response.json(content_type=None)
+        except Exception as e:
+            text = await response.text()
+            print(f"Failed to parse JSON. Status: {response.status}, Response: {text}")
+            return {
+                "error": f"Failed to parse JSON. Status: {response.status}",
+                "response_text": text,
+                "status_code": response.status,
+            }
 def get_dates():
     today = datetime.today()
     three_days_prior = today - timedelta(days=3)
@@ -122,20 +130,24 @@ async def summarize_stories_async(session, ticker):
     for headline, text in stories.items():
         if text:  # Only summarize if the text is not empty
             task = asyncio.create_task(async_query(session, {"inputs": text, "parameters": {"max_length": 130, "min_length": 30}}))
-            tasks.append(task)
+            tasks.append((headline,task))
 
     # Run all tasks concurrently and wait for their results
-    summaries = await asyncio.gather(*tasks)
+    results = await asyncio.gather(*[task for _, task in tasks],return_exceptions=True)
+    summarized_stories = {}
 
-    # Return the summarized results in a dictionary
-    summarized_stories = {
-        headline: summary[0]['summary_text'] if isinstance(summary, list) else ""
-        for headline, summary in zip(stories.keys(), summaries)
-    }
+    for (headline, task), result in zip(tasks, results):
+        if isinstance(result, Exception) or "error" in result:
+            summarized_stories[headline] = "Error or no summary generated"
+        elif isinstance(result, list) and 'summary_text' in result[0]:
+            summarized_stories[headline] = result[0]['summary_text']
+        else:
+            # Handle unexpected response formats
+            summarized_stories[headline] = "Error or unexpected response format"
+
     summarized_stories.update(stories_unretrieved)
 
     return summarized_stories
-
 
 # Wrapper to run the async function in a synchronous context
 async def run_summarize_stories(ticker):
