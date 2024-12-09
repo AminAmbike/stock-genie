@@ -74,13 +74,15 @@ def analyze_stock(stock_symbol,financial_data=None,news=None):
     
     prompt += f"\nBased on this data, provide a comprehensive analysis of the stock's current situation, potential risks, and opportunities. Keep in mind that some of this news may not be relevent to {stock_symbol}. What would be your recommendation for investors considering this stock?"
 
-    response = openai.chat.completions.create(
-            model="gpt-4o",
-            messages=[
-                {"role": "system", "content": "You are a financial analyst. Your job is to analyze given stocks using financial data and market news and give investment advice. Never mention articles by name"},
-                {"role": "user", "content": prompt}
-            ]
-        )
+     try:
+         response = openai.chat.completions.create(
+                 model="gpt-4o",
+                 messages=[
+                     {"role": "system", "content": "You are a financial analyst. Your job is to analyze given stocks using financial data and market news and give investment advice. Never mention articles by name"},
+                     {"role": "user", "content": prompt}
+                 ]
+             )
 
-    return response.choices[0].message.content
-
+         return response.choices[0].message.content
+     except Exception as e:
+         return "Rate limit exceeded. Please wait a few minutes before trying again."
