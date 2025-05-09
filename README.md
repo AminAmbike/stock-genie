@@ -2,7 +2,7 @@
 
 Stock Genie is an AI-powered stock analysis Agent that provides comprehensive insights into stocks by analyzing financial data and recent news.
 
-![Stock Genie UI Screenshot](./screenshots/Screenshot%202025-05-08%20at%2011.15.16%20PM.png)
+![Stock Genie UI Screenshot](./screenshots/Screenshot 2025-05-08 at 11.15.16 PM.png)
 
 ## Features
 
